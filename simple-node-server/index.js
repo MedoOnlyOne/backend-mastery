@@ -1,34 +1,53 @@
-const express = require('express');
-const { Worker } = require('worker_threads');
-const path = require('path');
+import express from 'express';
+import Piscina from 'piscina';
+import PQueue from 'p-queue';
+import path from 'path';
+import os from 'os';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const port = 3000
+
+// worker pool
+const pool = new Piscina({
+    filename: path.resolve(__dirname, 'worker.js'),
+    minThreads: 2,
+    maxThreads: os.cpus().length, // scale to CPU cores
+});
+
+// Queue with backpressure
+const queue = new PQueue({
+    concurrency: os.cpus().length // how many jobs run in parallel
+});
+
+// System limits (VERY IMPORTANT)
+const MAX_QUEUE_SIZE = 100; // protect memory
 
 app.get('/hello', (req, res) => {
     res.send('Hello World!')
 })
 
 app.get('/process', async (req, res) => {
-    const worker = new Worker(path.resolve(__dirname, 'worker.js'));
+    // Backpressure: reject if overloaded
+    if (queue.size >= MAX_QUEUE_SIZE) {
+        return res.status(503).send('Server busy, try again later');
+    }
 
-    worker.postMessage(10); // send input
-
-    worker.on('message', (result) => {
-        res.send(`Result: ${result}`);
-        worker.terminate(); // cleanup
-    });
-
-    worker.on('error', (err) => {
+    try {
+        const result = await queue.add(() =>
+            pool.run({
+                num: 10,
+                iterations: 1e10,
+            })
+        );
+        res.send(`Process is done, Result: ${result}`);
+    } catch (err) {
         res.status(500).send(err.message);
-    });
-
-    worker.on('exit', (code) => {
-        if (code !== 0) {
-            console.error(`Worker stopped with exit code ${code}`);
-        }
-    });
-
+    }
 })
 
 app.listen(port, () => {
