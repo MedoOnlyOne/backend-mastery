@@ -19,8 +19,8 @@
 
 **Purpose**: Project initialization and Spring Boot scaffolding
 
-- [ ] T001 Create playground3/ directory with Maven pom.xml (Spring Boot 3.5.6, spring-boot-starter-web, JJWT 0.13.0, spring-security-crypto) in `playground3/pom.xml`
-- [ ] T002 Create Spring Boot entry point in `playground3/src/main/java/com/example/playground3/Playground3Application.java`
+- [x] T001 Create playground3/ directory with Maven pom.xml (Spring Boot 3.4.3, spring-boot-starter-web, JJWT 0.12.6, spring-security-crypto) in `playground3/pom.xml`
+- [x] T002 Create Spring Boot entry point in `playground3/src/main/java/com/example/playground3/Playground3Application.java`
 
 ---
 
@@ -28,10 +28,10 @@
 
 **Purpose**: Core components shared across ALL user stories — MUST complete before any user story work begins
 
-- [ ] T003 [P] Create User model (email + password fields, constructor, getters) in `playground3/src/main/java/com/example/playground3/model/User.java`
-- [ ] T004 [P] Create HashUtil (BCrypt encode + matches using BCryptPasswordEncoder) in `playground3/src/main/java/com/example/playground3/util/HashUtil.java`
-- [ ] T005 [P] Create JwtUtil (createAccessToken, createRefreshToken, verifyAccessToken, verifyRefreshToken using JJWT with hardcoded secrets, 1min/1h expiry) in `playground3/src/main/java/com/example/playground3/util/JwtUtil.java`
-- [ ] T006 Create UserRepository (in-memory ArrayList, findUserByEmail, createUser) in `playground3/src/main/java/com/example/playground3/repository/UserRepository.java`
+- [x] T003 [P] Create User model (email + password fields, constructor, getters) in `playground3/src/main/java/com/example/playground3/model/User.java`
+- [x] T004 [P] Create HashUtil (BCrypt encode + matches using BCryptPasswordEncoder) in `playground3/src/main/java/com/example/playground3/util/HashUtil.java`
+- [x] T005 [P] Create JwtUtil (createAccessToken, createRefreshToken, verifyAccessToken, verifyRefreshToken using JJWT with hardcoded secrets, 1min/1h expiry) in `playground3/src/main/java/com/example/playground3/util/JwtUtil.java`
+- [x] T006 Create UserRepository (in-memory ArrayList, findUserByEmail, createUser) in `playground3/src/main/java/com/example/playground3/repository/UserRepository.java`
 
 **Checkpoint**: Foundation ready — User model, repository, JWT utility, and hash utility all in place
 
@@ -45,9 +45,9 @@
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Implement registerUser method in UserService (validate input, check duplicate email, hash password, save user) in `playground3/src/main/java/com/example/playground3/service/UserService.java`
-- [ ] T008 [US1] Create UserController with POST /users/register endpoint mapping, delegating to UserService in `playground3/src/main/java/com/example/playground3/controller/UserController.java`
-- [ ] T009 [US1] Add global exception handler for validation and duplicate-email errors returning 400 status with JSON error message in `playground3/src/main/java/com/example/playground3/controller/GlobalExceptionHandler.java`
+- [x] T007 [US1] Implement registerUser method in UserService (validate input, check duplicate email, hash password, save user) in `playground3/src/main/java/com/example/playground3/service/UserService.java`
+- [x] T008 [US1] Create UserController with POST /users/register endpoint mapping, delegating to UserService in `playground3/src/main/java/com/example/playground3/controller/UserController.java`
+- [x] T009 [US1] Add global exception handler for validation and duplicate-email errors returning 400 status with JSON error message in `playground3/src/main/java/com/example/playground3/controller/GlobalExceptionHandler.java`
 
 **Checkpoint**: Registration works end-to-end — user can register, duplicate emails are rejected with 400
 
@@ -61,8 +61,8 @@
 
 ### Implementation for User Story 2
 
-- [ ] T010 [US2] Add login method to UserService (validate credentials, verify password, generate access + refresh tokens via JwtUtil) in `playground3/src/main/java/com/example/playground3/service/UserService.java`
-- [ ] T011 [US2] Add POST /users/login endpoint to UserController, returning token pair with 200 or 401 on failure in `playground3/src/main/java/com/example/playground3/controller/UserController.java`
+- [x] T010 [US2] Add login method to UserService (validate credentials, verify password, generate access + refresh tokens via JwtUtil) in `playground3/src/main/java/com/example/playground3/service/UserService.java`
+- [x] T011 [US2] Add POST /users/login endpoint to UserController, returning token pair with 200 or 401 on failure in `playground3/src/main/java/com/example/playground3/controller/UserController.java`
 
 **Checkpoint**: Login works end-to-end — valid credentials return token pair, invalid credentials return 401
 
@@ -76,8 +76,8 @@
 
 ### Implementation for User Story 3
 
-- [ ] T012 [US3] Add generateAccessToken method to UserService (verify refresh token, issue new access token) in `playground3/src/main/java/com/example/playground3/service/UserService.java`
-- [ ] T013 [US3] Add POST /users/refresh endpoint to UserController, accepting `{"token":"..."}` body and returning new access token or 401 in `playground3/src/main/java/com/example/playground3/controller/UserController.java`
+- [x] T012 [US3] Add generateAccessToken method to UserService (verify refresh token, issue new access token) in `playground3/src/main/java/com/example/playground3/service/UserService.java`
+- [x] T013 [US3] Add POST /users/refresh endpoint to UserController, accepting `{"token":"..."}` body and returning new access token or 401 in `playground3/src/main/java/com/example/playground3/controller/UserController.java`
 
 **Checkpoint**: Token refresh works — valid refresh token returns new access token, invalid token returns 401
 
@@ -91,10 +91,10 @@
 
 ### Implementation for User Story 4
 
-- [ ] T014 [US4] Create JwtAuthFilter servlet filter (extract Authorization Bearer header, verify access token via JwtUtil, set userEmail as request attribute, return 401 on failure) in `playground3/src/main/java/com/example/playground3/config/JwtAuthFilter.java`
-- [ ] T015 [US4] Add getProfile method to UserService (verify access token, return user by email from repository) in `playground3/src/main/java/com/example/playground3/service/UserService.java`
-- [ ] T016 [US4] Add GET /users/me endpoint to UserController, reading token from Authorization header and delegating to UserService in `playground3/src/main/java/com/example/playground3/controller/UserController.java`
-- [ ] T017 [US4] Register JwtAuthFilter as a Spring Bean with FilterRegistrationBean, mapped to /users/me only in `playground3/src/main/java/com/example/playground3/config/FilterConfig.java`
+- [x] T014 [US4] Create JwtAuthFilter servlet filter (extract Authorization Bearer header, verify access token via JwtUtil, set userEmail as request attribute, return 401 on failure) in `playground3/src/main/java/com/example/playground3/config/JwtAuthFilter.java`
+- [x] T015 [US4] Add getProfile method to UserService (verify access token, return user by email from repository) in `playground3/src/main/java/com/example/playground3/service/UserService.java`
+- [x] T016 [US4] Add GET /users/me endpoint to UserController, reading token from Authorization header and delegating to UserService in `playground3/src/main/java/com/example/playground3/controller/UserController.java`
+- [x] T017 [US4] Register JwtAuthFilter as a Spring Bean with FilterRegistrationBean, mapped to /users/me only in `playground3/src/main/java/com/example/playground3/config/FilterConfig.java`
 
 **Checkpoint**: Profile access works — valid token returns user email, invalid/missing token returns 401. All 4 endpoints functional.
 
@@ -108,7 +108,7 @@
 
 ### Implementation for User Story 5
 
-- [ ] T018 [US5] Create COMPARISON.md covering: (1) project structure & bootstrapping, (2) dependency management (pom.xml vs package.json), (3) routing (annotations vs Router), (4) middleware/filters, (5) data layer patterns, with side-by-side code examples from playground2 and playground3 in `playground3/COMPARISON.md`
+- [x] T018 [US5] Create COMPARISON.md covering: (1) project structure & bootstrapping, (2) dependency management (pom.xml vs package.json), (3) routing (annotations vs Router), (4) middleware/filters, (5) data layer patterns, with side-by-side code examples from playground2 and playground3 in `playground3/COMPARISON.md`
 
 **Checkpoint**: Comparison document covers all required areas with concrete code examples
 
@@ -118,8 +118,8 @@
 
 **Purpose**: End-to-end validation and cleanup
 
-- [ ] T019 Run all 4 endpoints via quickstart.md curl commands and verify response shapes match playground2 exactly
-- [ ] T020 Verify server starts cleanly with `mvn spring-boot:run` and all error cases return correct status codes (400, 401)
+- [x] T019 Run all 4 endpoints via quickstart.md curl commands and verify response shapes match playground2 exactly
+- [x] T020 Verify server starts cleanly with `mvn spring-boot:run` and all error cases return correct status codes (400, 401)
 
 ---
 

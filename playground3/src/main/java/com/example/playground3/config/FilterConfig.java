@@ -1,0 +1,18 @@
+package com.example.playground3.config;
+
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class FilterConfig {
+
+    @Bean
+    public FilterRegistrationBean<JwtAuthFilter> jwtAuthFilterRegistration(JwtAuthFilter jwtAuthFilter) {
+        FilterRegistrationBean<JwtAuthFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(jwtAuthFilter);
+        registration.addUrlPatterns("/users/me");
+        registration.setOrder(1);
+        return registration;
+    }
+}
