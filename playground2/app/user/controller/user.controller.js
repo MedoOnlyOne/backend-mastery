@@ -6,7 +6,7 @@ async function registerUser(req, res, next) {
         const user = await userService.registerUser(email, password);
         return res.status(201).json({email: user.email});
     } catch (err) {
-        return res.status(400).json({message: err.message});
+        next(err);
     }
 }
 
@@ -16,7 +16,7 @@ async function login(req, res, next) {
         const tokens = await userService.login(email, password);
         return res.status(200).json(tokens);
     } catch (err) {
-        return res.status(401).json({message: err.message});
+        next(err);
     }
 }
 
@@ -26,7 +26,7 @@ async function generateAccessToken(req, res, next) {
         const newAccessToken = await userService.generateAccessToken(token);
         return res.status(200).json({newAccessToken});
     } catch (err) {
-        return res.status(401).json({message: err.message});
+        next(err);
     }
 }
 
@@ -36,7 +36,7 @@ async function getProfile(req, res, next) {
         const user = await userService.getProfile(token);
         return res.status(200).json({email: user.email});
     } catch (err) {
-        return res.status(401).json({message: err.message});
+        next(err);
     }
 }
 

@@ -1,14 +1,15 @@
 const {findUserByEmail, createUser} = require('../repository/user.repository');
 const {hashPassword, comparePassword} = require('../util/hash');
+const {UserAlreadyExists, InvalidCredentials, InvalidToken} = require('../UserErrors');
 const jwt= require('../util/jwt');
 
 async function registerUser(email, password) {
     if (!email || !password) {
-        throw new Error('Invalid email or password');
+        throw InvalidCredentials;
     }
     const existingUser = findUserByEmail(email);
     if (existingUser) {
-        throw new Error('User already exists');
+        throw UserAlreadyExists;
     }
     const hashedPassword = await hashPassword(password);
     const user = createUser(email, hashedPassword);
@@ -17,15 +18,15 @@ async function registerUser(email, password) {
 
 async function login(email, password) {
     if (!email || !password) {
-        throw new Error('Invalid credentials');
+        throw InvalidCredentials;
     }
     const user = findUserByEmail(email);
     if(!user) {
-        throw new Error('Invalid credentials');
+        throw InvalidCredentials;
     }
     const isMatch = await comparePassword(password, user.password);
     if(!isMatch) {
-        throw new Error('Invalid credentials');
+        throw InvalidCredentials;
     }
     const accessToken = await jwt.createAccessToken(user);
     const refreshToken = await jwt.createRefreshToken(user);
@@ -34,11 +35,11 @@ async function login(email, password) {
 
 async function generateAccessToken(token) {
     if (!token) {
-        throw new Error('Invalid token');
+        throw InvalidToken;
     }
     const user = await jwt.verifyRefreshToken(token);
     if(!user) {
-        throw new Error('Invalid token');
+        throw InvalidToken;
     }
     const accessToken = await jwt.createAccessToken(user);
     return accessToken;
@@ -46,11 +47,11 @@ async function generateAccessToken(token) {
 
 async function getProfile(token) {
     if (!token) {
-        throw new Error('Invalid token');
+        throw InvalidToken;
     }
     const user = await jwt.verifyAccessToken(token);
     if(!user) {
-        throw new Error('Invalid token');
+        throw InvalidToken;
     }
     return user;
 }
