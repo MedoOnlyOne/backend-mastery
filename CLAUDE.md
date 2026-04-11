@@ -50,6 +50,8 @@ Flow: **route → controller → service → repository**, with utilities (jwt, 
 ## Active Technologies
 - Java 17+ + Spring Boot 3.5.6 (spring-boot-starter-web), JJWT 0.13.0, spring-security-crypto (001-springboot-auth-comparison)
 - In-memory (ArrayList), same as playground2 (001-springboot-auth-comparison)
+- Java 17+ + Spring Boot 3.4.3, Spring Security 6.x (via spring-boot-starter-security), JJWT 0.12.6 (002-spring-security)
+- In-memory (ArrayList) — no persistence (002-spring-security)
 
 ## Recent Changes
 - 001-springboot-auth-comparison: Added Java 17+ + Spring Boot 3.5.6 (spring-boot-starter-web), JJWT 0.13.0, spring-security-crypto

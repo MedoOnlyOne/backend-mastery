@@ -4,6 +4,7 @@ import com.example.playground3.model.User;
 import com.example.playground3.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -42,7 +43,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<Map<String, String>> getProfile(@RequestAttribute("userEmail") String userEmail) {
-        return ResponseEntity.ok(Map.of("email", userEmail));
+    public ResponseEntity<Map<String, String>> getProfile(@AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(Map.of("email", email));
     }
 }
