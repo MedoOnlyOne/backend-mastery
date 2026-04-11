@@ -76,8 +76,8 @@ Install: `npm install` — downloads everything in seconds.
     </dependency>
     <!-- + 2 more jjwt artifacts for runtime -->
     <dependency>
-        <groupId>org.springframework.security</groupId>
-        <artifactId>spring-security-crypto</artifactId>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
 </dependencies>
 ```
@@ -120,7 +120,7 @@ public class UserController {
     public ResponseEntity<Map<String, String>> generateAccessToken(@RequestBody Map<String, String> body) { ... }
 
     @GetMapping("/me")
-    public ResponseEntity<Map<String, String>> getProfile(@RequestAttribute("userEmail") String userEmail) { ... }
+    public ResponseEntity<Map<String, String>> getProfile(@AuthenticationPrincipal String email) { ... }
 }
 ```
 
@@ -147,45 +147,79 @@ async function getProfile(req, res, next) {
 
 Token extraction and validation happen inline in the controller.
 
-**Spring Boot** — servlet filter registered via configuration class:
+**Spring Boot** — Spring Security's `SecurityFilterChain` with custom JWT filter:
 
 ```java
-// config/JwtAuthFilter.java — 30+ lines for token extraction
+// config/SecurityConfig.java — centralized security configuration
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .formLogin(formLogin -> formLogin.disable())
+            .httpBasic(httpBasic -> httpBasic.disable())
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(POST, "/users/register").permitAll()
+                .requestMatchers(POST, "/users/login").permitAll()
+                .requestMatchers(POST, "/users/refresh").permitAll()
+                .anyRequest().authenticated())
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(jsonAuthenticationEntryPoint))
+            .addFilterBefore(jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+}
+
+// config/JwtAuthenticationFilter.java — token extraction + SecurityContext setup
 @Component
-public class JwtAuthFilter implements Filter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
-        String header = httpRequest.getHeader("Authorization");
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) {
+        String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            sendError(httpResponse, "Invalid token");
+            filterChain.doFilter(request, response);
             return;
         }
         String token = header.substring(7);
         try {
             var claims = JwtUtil.verifyAccessToken(token);
-            request.setAttribute("userEmail", claims.getSubject());
-            chain.doFilter(request, response);
+            String email = claims.getSubject();
+            var authentication = UsernamePasswordAuthenticationToken
+                .authenticated(email, null, List.of());
+            SecurityContext context = SecurityContextHolder.getContextHolderStrategy()
+                .createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.getContextHolderStrategy().setContext(context);
         } catch (Exception e) {
-            sendError(httpResponse, "Invalid token");
+            // Invalid token — SecurityContext not set.
+            // ExceptionTranslationFilter invokes AuthenticationEntryPoint.
         }
+        filterChain.doFilter(request, response);
     }
 }
 
-// config/FilterConfig.java — separate class to register the filter
-@Configuration
-public class FilterConfig {
-    @Bean
-    public FilterRegistrationBean<JwtAuthFilter> jwtAuthFilterRegistration(JwtAuthFilter f) {
-        FilterRegistrationBean<JwtAuthFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(f);
-        registration.addUrlPatterns("/users/me");
-        registration.setOrder(1);
-        return registration;
+// config/JsonAuthenticationEntryPoint.java — JSON 401 error responses
+@Component
+public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
+    @Override
+    public void commence(HttpServletRequest request, HttpServletResponse response,
+                         AuthenticationException authException) throws IOException {
+        response.setStatus(401);
+        response.setContentType("application/json");
+        response.getWriter().write(
+            objectMapper.writeValueAsString(Map.of("message", "Invalid token")));
     }
 }
 ```
 
-**Key difference**: Express middleware is just a function — you pass it where you need it. Spring Boot requires a filter class implementing `jakarta.servlet.Filter`, plus a `@Configuration` class to register it, plus Spring's `FilterRegistrationBean` API to control URL patterns. For the same task, Express uses 3 lines of inline code; Spring Boot uses 2 classes and ~40 lines. The Spring approach is more formal and decoupled, but significantly more verbose for simple cases.
+**Key difference**: Express middleware is just a function — you pass it where you need it. Spring Security requires 3 classes: a `SecurityConfig` to define the filter chain, a `JwtAuthenticationFilter` extending `OncePerRequestFilter` for token extraction, and a `JsonAuthenticationEntryPoint` for consistent error responses. For the same task, Express uses 3 lines of inline code; Spring Security uses 3 classes and ~60 lines. The Spring approach provides centralized authorization rules (permitAll vs authenticated), automatic security header management, and a pluggable filter chain — but at significant verbosity cost for simple cases.
 
 ---
 
@@ -237,12 +271,12 @@ public class UserRepository {
 
 | Aspect | Express.js | Spring Boot | Verbose? |
 |--------|-----------|-------------|----------|
-| **Lines of code** (excluding node_modules/target) | ~80 | ~180 | Spring Boot ~2x |
-| **Files to create** | 8 | 8 + config | Similar |
+| **Lines of code** (excluding node_modules/target) | ~80 | ~200 | Spring Boot ~2.5x |
+| **Files to create** | 8 | 8 + config (3 files) | Similar |
 | **Entry point** | 4 lines | 10 lines + class wrapper | Spring Boot more verbose |
-| **Dependencies** | 3 direct | 4 direct, ~30 transitive | Spring Boot heavier |
+| **Dependencies** | 3 direct | 4 direct, ~30+ transitive | Spring Boot heavier |
 | **Routing style** | Separate file, data-driven | Annotations on methods | Different mental models |
-| **Middleware** | Inline function | Filter class + config class | Spring Boot ~5x more code |
+| **Middleware** | Inline function | SecurityFilterChain + filter + entry point | Spring Boot ~10x more code |
 | **Type safety** | None (JavaScript) | Full (Java) | Tradeoff: safety vs speed |
 | **Startup time** | <1s | ~3-5s | Express faster |
 | **Conventions** | Opt-in | Mandatory structure | Spring Boot more opinionated |
